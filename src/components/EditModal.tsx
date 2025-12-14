@@ -14,14 +14,12 @@ export default function EditModal({ close, setData }: any) {
 
     setLoading(true);
 
-    // 1️⃣ Fetch previous value (if exists)
     const { data: existing } = await supabase
       .from("chart_updates")
       .select("value")
       .eq("email", email)
       .maybeSingle();
 
-    // 2️⃣ Ask overwrite confirmation
     if (existing) {
       const ok = confirm(
         `Your previous value was ${existing.value}. Overwrite it?`
@@ -32,13 +30,11 @@ export default function EditModal({ close, setData }: any) {
       }
     }
 
-    // 3️⃣ Save / overwrite value
     await supabase.from("chart_updates").upsert({
       email,
       value: Number(value),
     });
 
-    // 4️⃣ Update chart
     setData([{ label: "Custom", calls: Number(value) }]);
     setLoading(false);
     close();

@@ -6,12 +6,10 @@ export default function Navbar() {
   return (
     <nav className="px-4 sm:px-6 lg:px-10 py-4 sm:py-6 border-b border-primary/10">
       <div className="flex justify-between items-center">
-        {/* Logo */}
         <h1 className="text-lg sm:text-xl font-semibold">
           VoiceOps Analytics
         </h1>
 
-        {/* Desktop Navigation */}
         <div className="hidden md:flex gap-6 text-sm opacity-80">
           <span className="hover:text-primary hover:opacity-100 cursor-pointer transition-colors">
             Overview
@@ -27,12 +25,10 @@ export default function Navbar() {
           </span>
         </div>
 
-        {/* Desktop CTA Button */}
         <button className="hidden md:block bg-primary hover:bg-primary/90 px-5 py-2 rounded-full transition-colors duration-200 text-sm font-medium">
           Request Demo
         </button>
 
-        {/* Mobile Menu Button */}
         <button
           onClick={() => setIsOpen(!isOpen)}
           className="md:hidden p-2 hover:bg-card rounded-lg transition-colors"
@@ -63,7 +59,6 @@ export default function Navbar() {
         </button>
       </div>
 
-      {/* Mobile Menu */}
       {isOpen && (
         <div className="md:hidden mt-4 py-4 border-t border-primary/10">
           <div className="flex flex-col gap-4 text-sm opacity-80">
