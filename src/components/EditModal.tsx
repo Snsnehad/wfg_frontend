@@ -8,6 +8,14 @@ export default function EditModal({ close, setData }: any) {
   const [values, setValues] = useState<Record<string, string>>({});
   const [previousData, setPreviousData] = useState<any[] | null>(null);
   const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(false);
+
+  useEffect(() => {
+    const savedEmail = localStorage.getItem("user_email");
+    if (savedEmail) {
+      setEmail(savedEmail);
+    }
+  }, []);
 
   useEffect(() => {
     if (!email) {
@@ -16,7 +24,10 @@ export default function EditModal({ close, setData }: any) {
       return;
     }
 
+    localStorage.setItem("user_email", email);
+
     async function fetchPrevious() {
+      setFetching(true);
       const { data } = await supabase
         .from("chart_updates")
         .select("data")
@@ -26,7 +37,6 @@ export default function EditModal({ close, setData }: any) {
       if (data?.data) {
         setPreviousData(data.data);
 
-        // Prefill inputs
         const mapped: Record<string, string> = {};
         data.data.forEach((item: any) => {
           mapped[item.label] = String(item.calls);
@@ -36,15 +46,17 @@ export default function EditModal({ close, setData }: any) {
         setPreviousData(null);
         setValues({});
       }
+      setFetching(false);
     }
 
-    fetchPrevious();
+    const timer = setTimeout(fetchPrevious, 500);
+    return () => clearTimeout(timer);
   }, [email]);
 
   function handleChange(day: string, value: string) {
     setValues((prev) => ({
       ...prev,
-      [day]: value, 
+      [day]: value,
     }));
   }
 
@@ -81,6 +93,9 @@ export default function EditModal({ close, setData }: any) {
     close();
   }
 
+  const hasValues = days.some(day => values[day]);
+  const canSave = email && hasValues && !fetching;
+
   return (
     <div
       className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 px-4"
@@ -95,42 +110,64 @@ export default function EditModal({ close, setData }: any) {
         </h3>
 
         {/* Email input */}
-        <input
-          type="email"
-          placeholder="Your Email"
-          className="w-full p-3 mb-4 bg-bg border rounded"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
+        <div className="mb-4">
+          <label className="block text-sm mb-1.5">
+            Email <span className="text-red-400">*</span>
+          </label>
+          <input
+            type="email"
+            placeholder="Enter your email"
+            className="w-full p-3 bg-bg border rounded disabled:opacity-50 disabled:cursor-not-allowed"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            disabled={loading}
+          />
+          {fetching && (
+            <p className="text-xs text-blue-400 mt-1.5 flex items-center gap-1">
+              <span className="animate-pulse">⏳</span> Loading your data...
+            </p>
+          )}
+          {previousData && !fetching && (
+            <p className="text-xs text-green-400 mt-1.5 flex items-center gap-1">
+              <span>✓</span> Previous values loaded - edit as needed
+            </p>
+          )}
+          {!email && (
+            <p className="text-xs text-gray-400 mt-1.5">
+              Enter your email to load previous data
+            </p>
+          )}
+        </div>
 
-        {previousData && (
-          <p className="text-sm text-accent mb-3">
-            Previous values loaded for this email
-          </p>
-        )}
-
-        {/* Day-wise inputs */}
         <div className="space-y-3">
           {days.map((day) => (
             <div key={day} className="flex items-center justify-between">
-              <label className="w-12">{day}</label>
+              <label className="w-12 text-sm">{day}</label>
               <input
                 type="number"
-                className="flex-1 ml-3 p-2 bg-bg border rounded"
-                placeholder="Calls"
+                className="flex-1 ml-3 p-2 bg-bg border rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                placeholder="0"
                 value={values[day] ?? ""}
                 onChange={(e) => handleChange(day, e.target.value)}
+                disabled={!email || fetching || loading}
+                min="0"
               />
             </div>
           ))}
         </div>
 
         <div className="flex justify-end gap-3 mt-6">
-          <button onClick={close}>Cancel</button>
+          <button 
+            onClick={close} 
+            className="px-4 py-2 rounded hover:bg-bg transition-colors"
+            disabled={loading}
+          >
+            Cancel
+          </button>
           <button
             onClick={save}
-            disabled={loading}
-            className="bg-primary px-4 py-2 rounded"
+            disabled={!canSave || loading}
+            className="bg-primary px-4 py-2 rounded disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
           >
             {loading ? "Saving..." : "Save"}
           </button>
